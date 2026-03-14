@@ -145,16 +145,18 @@ static void normal_and_subnormal(FP16Unpacked u1, FP16Unpacked u2){
     // printf("exp = %d", exp);
 
     if (exp<=-14){
-        shift -= (-14-exp);
-        shift +=2;
+        //count 是 Raw 前置多少个0， shift是位移多少可以让1进入首位
+        uint16_t delta = -exp - 14;
+        shift = delta - 2;
+
         exp = -14;
 
-        uint16_t fractionforsubnormal = ((Raw & FP16_PRE_FRAC_MASK)>>(12-shift));
-        uint16_t G = ((Raw >> (12 - shift - 1)) & 1)  ? 1:0;
-        uint16_t R = ((Raw >> (12 - shift - 2)) & 1) ? 1:0;
+        uint16_t fractionforsubnormal = ((Raw >>shift) & 0X3FF000)>>12 ;
+        uint16_t G = ((Raw >> (12 + shift)) & 1)  ? 1:0;
+        uint16_t R = ((Raw >> (12 + shift - 1)) & 1) ? 1:0;
         uint16_t S;
         uint32_t a =0;
-        for(int16_t i = 12 - shift -3; i>=0; i--){
+        for(int16_t i = 12 + shift - 2; i>=0; i--){
             uint16_t popped = (Raw>>i)&1 ;
             a = a*2 + popped;
         }
@@ -163,7 +165,7 @@ static void normal_and_subnormal(FP16Unpacked u1, FP16Unpacked u2){
         }else{
             S = 0;
         }
-        uint16_t Inexact = (Raw & (0xffff-FP16_PRE_FRAC_MASK));
+        uint16_t Inexact = G || R || S;
 
         printf("Norm: E_norm=-14");
         printf(" Fraction=");
