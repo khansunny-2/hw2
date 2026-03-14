@@ -166,7 +166,7 @@ static void normal_and_subnormal(FP16Unpacked u1, FP16Unpacked u2){
         uint16_t Inexact = G || R || S;
 
         printf("Norm: E_norm=-14");
-        printf(" Fraction = ");
+        printf(" Fraction=");
         print_binary_10(fractionforsubnormal);
         if((Inexact != 0)&&(sign == 0)){
             fractionforsubnormal += 1;
@@ -188,7 +188,7 @@ static void normal_and_subnormal(FP16Unpacked u1, FP16Unpacked u2){
     // printf("%d",((Raw << (count + 1)) & FP16_PRE_FRAC_MASK));
     // print_binary_22((Raw << (count + 1))& FP16_PRE_FRAC_MASK);
     printf("Norm: E_norm=%d", exp);
-    printf(" Fraction = ");
+    printf(" Fraction=");
     print_binary_10(((Raw << (count + 1)) & FP16_PRE_FRAC_MASK)>>12);
 
     uint16_t G = (pre_fraction & FP16_G_MASK) ? 1:0;
@@ -212,12 +212,12 @@ static void normal_and_subnormal(FP16Unpacked u1, FP16Unpacked u2){
     uint16_t Result = ((exp + 15) << 10) + (sign << 15) + pre_fraction;
     if((Result >= 0x7bff)&&(sign == 0)){
         printf(" G=0 R=0 S=0 Action=Truncate\n");
-        printf("Result: 7c00");
+        printf("Result: 7c00\n");
         return;
     }
     if((Result >= 0xfbff)){
         printf(" G=0 R=0 S=0 Action=Truncate\n");
-        printf("Result: fbff");
+        printf("Result: fbff\n");
         return;
     }
 
