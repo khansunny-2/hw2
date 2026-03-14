@@ -151,12 +151,12 @@ static void normal_and_subnormal(FP16Unpacked u1, FP16Unpacked u2){
 
         exp = -14;
 
-        uint16_t fractionforsubnormal = ((Raw >>shift) & 0X3FF000)>>12 ;
-        uint16_t G = ((Raw >> (12 + shift)) & 1)  ? 1:0;
-        uint16_t R = ((Raw >> (12 + shift - 1)) & 1) ? 1:0;
+        uint16_t fractionforsubnormal = (Raw & (0X3FF000 << shift))>>(12+shift) ;
+        uint16_t G = ((Raw >> (11 + shift)) & 1)  ? 1:0;
+        uint16_t R = ((Raw >> (10 + shift)) & 1) ? 1:0;
         uint16_t S;
         uint32_t a =0;
-        for(int16_t i = 12 + shift - 2; i>=0; i--){
+        for(int16_t i = 9 + shift; i>=0; i--){
             uint16_t popped = (Raw>>i)&1 ;
             a = a*2 + popped;
         }
@@ -165,7 +165,7 @@ static void normal_and_subnormal(FP16Unpacked u1, FP16Unpacked u2){
         }else{
             S = 0;
         }
-        uint16_t Inexact = G || R || S;
+        uint16_t Inexact = G | R | S;
 
         printf("Norm: E_norm=-14");
         printf(" Fraction=");
