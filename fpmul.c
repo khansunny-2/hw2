@@ -150,10 +150,15 @@ static void normal_and_subnormal(FP16Unpacked u1, FP16Unpacked u2){
         exp = -14;
 
         uint16_t fractionforsubnormal = ((Raw & FP16_PRE_FRAC_MASK)>>(12-shift));
-        uint16_t G = (Raw & FP16_G_MASK) ? 1:0;
-        uint16_t R = (Raw & FP16_R_MASK) ? 1:0;
+        uint16_t G = ((Raw >> (12 - shift - 1)) & 1)  ? 1:0;
+        uint16_t R = ((Raw >> (12 - shift - 2)) & 1) ? 1:0;
         uint16_t S;
-        if (Raw & FP16_S_MASK){
+        uint32_t a =0;
+        for(int16_t i = 12 - shift -3; i>=0; i--){
+            uint16_t popped = (Raw>>i)&1 ;
+            a = a*2 + popped;
+        }
+        if (a){
             S = 1;
         }else{
             S = 0;
@@ -166,6 +171,10 @@ static void normal_and_subnormal(FP16Unpacked u1, FP16Unpacked u2){
         if((Inexact != 0)&&(sign == 0)){
             fractionforsubnormal += 1;
         }
+        if(sign == 1){
+            Inexact = 0;
+        }
+
         printf(" G=%d R=%d S=%d Action=%s\n",
             G, R, S, Inexact ? "Up" : "Truncate");
         uint16_t Result = (sign << 15) + fractionforsubnormal;
@@ -182,8 +191,8 @@ static void normal_and_subnormal(FP16Unpacked u1, FP16Unpacked u2){
     printf(" Fraction = ");
     print_binary_10(((Raw << (count + 1)) & FP16_PRE_FRAC_MASK)>>12);
 
-    uint16_t G = (Raw & FP16_G_MASK) ? 1:0;
-    uint16_t R = (Raw & FP16_R_MASK) ? 1:0;
+    uint16_t G = (pre_fraction & FP16_G_MASK) ? 1:0;
+    uint16_t R = (pre_fraction & FP16_R_MASK) ? 1:0;
     uint16_t S;
     if (Raw & FP16_S_MASK){
         S = 1;
@@ -194,6 +203,10 @@ static void normal_and_subnormal(FP16Unpacked u1, FP16Unpacked u2){
 
     if((Inexact != 0)&&(sign == 0)){
         pre_fraction += 1;
+    }
+
+    if(sign == 1){
+        Inexact = 0;
     }
 
     uint16_t Result = ((exp + 15) << 10) + (sign << 15) + pre_fraction;
@@ -208,6 +221,7 @@ static void normal_and_subnormal(FP16Unpacked u1, FP16Unpacked u2){
         return;
     }
 
+    
     printf(" G=%d R=%d S=%d Action=%s\n",
         G, R, S, Inexact ? "Up" : "Truncate");
 
