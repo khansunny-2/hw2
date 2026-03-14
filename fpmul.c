@@ -31,7 +31,7 @@ typedef struct {
 #define TYPE_NAN       4
 
 static void print_binary_22(uint32_t val) {
-    for (uint16_t i = 21; i >= 0; i--) {
+    for (int16_t i = 21; i >= 0; i--) {
         printf("%d", (val >> i) & 1);
     }
 }
