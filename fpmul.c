@@ -191,8 +191,8 @@ static void normal_and_subnormal(FP16Unpacked u1, FP16Unpacked u2){
     printf(" Fraction=");
     print_binary_10(((Raw << (count + 1)) & FP16_PRE_FRAC_MASK)>>12);
 
-    uint16_t G = (pre_fraction & FP16_G_MASK) ? 1:0;
-    uint16_t R = (pre_fraction & FP16_R_MASK) ? 1:0;
+    uint16_t G = ((Raw << (count + 1)) & FP16_R_MASK) ? 1:0;
+    uint16_t R = ((Raw << (count + 1)) & FP16_R_MASK) ? 1:0;
     uint16_t S;
     if (Raw & FP16_S_MASK){
         S = 1;
