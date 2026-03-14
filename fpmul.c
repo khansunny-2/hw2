@@ -118,138 +118,120 @@ static FP16Unpacked unpack_fp16(uint16_t raw) {
 
 
 static void normal_and_subnormal(FP16Unpacked u1, FP16Unpacked u2){
-    // printf("am i in?");
     uint16_t sign = u1.sign ^ u2.sign;
     int16_t exp = u1.exp_unbiased + u2.exp_unbiased;
-    uint32_t Raw = (int32_t)u1.mantissa_11bit * u2.mantissa_11bit;
+    uint32_t Raw = (uint32_t)u1.mantissa_11bit * u2.mantissa_11bit;
     printf("Raw: ");
     print_binary_22(Raw);
-    // printf("\n");
     printf(" E_raw=%d\n", exp);
 
-    int16_t shift;
-    int16_t count = 0 ;
-    for(int16_t i = 21 ; i >= 0 ; i--){
-        uint16_t a = Raw >> i;
-        if (a != 1){
-            count++;
-            // printf("count = %d", count);
-        }else{
-            break;
-        }
+    // count = number of leading zeros in 22-bit representation
+    int16_t count = 0;
+    for(int16_t i = 21; i >= 0; i--){
+        if ((Raw >> i) & 1) break;
+        count++;
     }
-    //count=0 +1 count = 1 +0 ....
-    shift = 1 - count;
-
+    // shift to normalize: MSB goes to bit 22 (hidden bit above bit 21)
+    // left shift by (count + 1) puts MSB at bit 22
+    // exp adjustment: shift = 1 - count
+    int16_t shift = 1 - count;
     exp += shift;
-    // printf("exp = %d", exp);
 
-    if (exp<=-14){
-        //count 是 Raw 前置多少个0， shift是位移多少可以让1进入首位
-        uint16_t delta = -exp - 14;
-        shift = delta - 2;
+    if (exp < -14){
+        // Subnormal result: need to align Raw so that E_norm = -14
+        // Normal path would left-shift by (count+1). For subnormal at E=-14,
+        // we need additional right-shift of (-14 - exp) from the normalized position.
+        // Net left shift = (count + 1) - (-14 - exp) = (count + 1) + 14 + exp
+        int16_t net_left = (count + 1) + 14 + exp;
 
         exp = -14;
 
-        uint32_t fractionforsubnormal = ((Raw >> shift) & 0X3FF000)>>12 ;
-        uint16_t G = ((Raw >> (11 + shift)) & 1)  ? 1:0;
-        uint16_t R = ((Raw >> (10 + shift)) & 1) ? 1:0;
-        uint16_t S;
-        uint32_t a =0;
-        int acount=0;
-        for(int16_t i = 9 + shift; i>=0; i--){
-            uint16_t popped = (Raw>>i)&1 ;
-            a = a*2 + popped;
-            acount++;
+        uint32_t shifted;
+        uint16_t S = 0;
+        if (net_left >= 0) {
+            shifted = Raw << net_left;
+        } else {
+            int16_t rshift = -net_left;
+            uint32_t mask = (rshift < 32) ? ((1u << rshift) - 1) : 0xFFFFFFFF;
+            if (Raw & mask) S = 1;
+            shifted = Raw >> rshift;
         }
-        if (a){
-            S = 1;
-        }else{
-            S = 0;
+
+        uint32_t fractionforsubnormal = (shifted >> 12) & 0x3FF;
+        uint16_t G = (shifted >> 11) & 1;
+        uint16_t R = (shifted >> 10) & 1;
+        if (!S) {
+            if (shifted & 0x3FF) S = 1;
         }
+
         uint16_t Inexact = G | R | S;
 
         printf("Norm: E_norm=-14");
         printf(" Fraction=");
         print_binary_10(fractionforsubnormal);
-        if((Inexact != 0)&&(sign == 0)){
-            fractionforsubnormal += 1;
-        }
-        if(sign == 1){
-            Inexact = 0;
-        }
 
         printf(" G=%d R=%d S=%d Action=%s\n",
-            G, R, S, Inexact ? "Up" : "Truncate");
+            G, R, S, (Inexact && sign == 0) ? "Up" : "Truncate");
+
+        if (Inexact && sign == 0) {
+            fractionforsubnormal += 1;
+        }
+
         uint16_t Result = (sign << 15) + fractionforsubnormal;
-        
         printf("Result: %04x\n", Result);
         return;
     }
 
-    
-    uint32_t pre_fraction = ((Raw << (count + 1)) & FP16_PRE_FRAC_MASK) >> 12;
-    // printf("%d",((Raw << (count + 1)) & FP16_PRE_FRAC_MASK));
-    // print_binary_22((Raw << (count + 1))& FP16_PRE_FRAC_MASK);
+    // Normal path: left-shift Raw by (count+1) to put MSB at bit 22
+    uint32_t shifted_raw = Raw << (count + 1);
+    uint32_t pre_fraction = (shifted_raw & FP16_PRE_FRAC_MASK) >> 12;
+
     printf("Norm: E_norm=%d", exp);
     printf(" Fraction=");
-    print_binary_10(((Raw << (count + 1)) & FP16_PRE_FRAC_MASK)>>12);
+    print_binary_10(pre_fraction);
 
-    uint16_t G = ((Raw << (count + 1)) & FP16_G_MASK) ? 1:0;
-    uint16_t R = ((Raw << (count + 1)) & FP16_R_MASK) ? 1:0;
-    uint16_t S;
-    if (Raw & FP16_S_MASK){
-        S = 1;
-    }else{
-        S = 0;
-    }
+    uint16_t G = (shifted_raw >> 11) & 1;
+    uint16_t R = (shifted_raw >> 10) & 1;
+    uint16_t S = (shifted_raw & 0x3FF) ? 1 : 0;
 
-    uint16_t Inexact = ((Raw << (count + 1)) & (0xffff-FP16_PRE_FRAC_MASK));
+    uint16_t Inexact = G | R | S;
 
-    
+    // Print GRS and Action before rounding
+    printf(" G=%d R=%d S=%d Action=%s\n",
+        G, R, S, (Inexact && sign == 0) ? "Up" : "Truncate");
+
     if (Inexact && sign == 0) {
         pre_fraction += 1;
-    
-        if (pre_fraction >= 0x400) { 
+
+        if (pre_fraction >= 0x400) {
             pre_fraction = 0;
             exp += 1;
         }
     }
 
-    
-    if (exp > 15) {  
+    // Overflow check
+    if (exp > 15) {
         if (sign == 0) {
-            printf(" G=0 R=0 S=0 Action=Truncate\n");
-            printf("Result: 7c00\n");  
+            printf("Result: 7c00\n");
         } else {
-            printf(" G=0 R=0 S=0 Action=Truncate\n");
-            printf("Result: fbff\n");  
+            printf("Result: fbff\n");
         }
         return;
     }
 
-    if(sign == 1){
-        Inexact = 0;
-    }
-
     uint16_t Result = ((exp + 15) << 10) + (sign << 15) + pre_fraction;
-    if((Result >= 0x7bff)&&(sign == 0)){
-        printf(" G=0 R=0 S=0 Action=Truncate\n");
+
+    // Final overflow guard
+    if (sign == 0 && Result >= 0x7c00) {
         printf("Result: 7c00\n");
         return;
     }
-    if((Result >= 0xfbff)){
-        printf(" G=0 R=0 S=0 Action=Truncate\n");
+    if (sign == 1 && Result > 0xfbff) {
         printf("Result: fbff\n");
         return;
     }
 
-    
-    printf(" G=%d R=%d S=%d Action=%s\n",
-        G, R, S, Inexact ? "Up" : "Truncate");
-
     printf("Result: %04x\n", Result);
-    return;
 }
 
 static void multiply_fp16(uint16_t op1_raw, uint16_t op2_raw) {
