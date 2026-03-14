@@ -202,8 +202,26 @@ static void normal_and_subnormal(FP16Unpacked u1, FP16Unpacked u2){
 
     uint16_t Inexact = ((Raw << (count + 1)) & (0xffff-FP16_PRE_FRAC_MASK));
 
-    if((Inexact != 0)&&(sign == 0)){
+    
+    if (Inexact && sign == 0) {
         pre_fraction += 1;
+    
+        if (pre_fraction >= 0x400) { 
+            pre_fraction = 0;
+            exp += 1;
+        }
+    }
+
+    
+    if (exp > 15) {  
+        if (sign == 0) {
+            printf(" G=0 R=0 S=0 Action=Truncate\n");
+            printf("Result: 7c00\n");  
+        } else {
+            printf(" G=0 R=0 S=0 Action=Truncate\n");
+            printf("Result: fbff\n");  
+        }
+        return;
     }
 
     if(sign == 1){
