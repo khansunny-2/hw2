@@ -163,7 +163,7 @@ static void normal_and_subnormal(FP16Unpacked u1, FP16Unpacked u2){
         }else{
             S = 0;
         }
-        uint16_t Inexact = G || R || S;
+        uint16_t Inexact = (Raw & (0xffff-FP16_PRE_FRAC_MASK));
 
         printf("Norm: E_norm=-14");
         printf(" Fraction=");
@@ -199,7 +199,8 @@ static void normal_and_subnormal(FP16Unpacked u1, FP16Unpacked u2){
     }else{
         S = 0;
     }
-    uint16_t Inexact = G || R || S;
+
+    uint16_t Inexact = ((Raw << (count + 1)) & (0xffff-FP16_PRE_FRAC_MASK));
 
     if((Inexact != 0)&&(sign == 0)){
         pre_fraction += 1;
