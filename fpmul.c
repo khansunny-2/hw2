@@ -125,23 +125,15 @@ static void normal_and_subnormal(FP16Unpacked u1, FP16Unpacked u2){
     print_binary_22(Raw);
     printf(" E_raw=%d\n", exp);
 
-    // count = number of leading zeros in 22-bit representation
     int16_t count = 0;
     for(int16_t i = 21; i >= 0; i--){
         if ((Raw >> i) & 1) break;
         count++;
     }
-    // shift to normalize: MSB goes to bit 22 (hidden bit above bit 21)
-    // left shift by (count + 1) puts MSB at bit 22
-    // exp adjustment: shift = 1 - count
     int16_t shift = 1 - count;
     exp += shift;
 
     if (exp < -14){
-        // Subnormal result: need to align Raw so that E_norm = -14
-        // Normal path would left-shift by (count+1). For subnormal at E=-14,
-        // we need additional right-shift of (-14 - exp) from the normalized position.
-        // Net left shift = (count + 1) - (-14 - exp) = (count + 1) + 14 + exp
         int16_t net_left = (count + 1) + 14 + exp;
 
         exp = -14;
