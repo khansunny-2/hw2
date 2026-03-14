@@ -174,7 +174,6 @@ static void normal_and_subnormal(FP16Unpacked u1, FP16Unpacked u2){
         return;
     }
 
-    // Normal path: left-shift Raw by (count+1) to put MSB at bit 22
     uint32_t shifted_raw = Raw << (count + 1);
     uint32_t pre_fraction = (shifted_raw & FP16_PRE_FRAC_MASK) >> 12;
 
@@ -188,7 +187,6 @@ static void normal_and_subnormal(FP16Unpacked u1, FP16Unpacked u2){
 
     uint16_t Inexact = G | R | S;
 
-    // Print GRS and Action before rounding
     printf(" G=%d R=%d S=%d Action=%s\n",
         G, R, S, (Inexact && sign == 0) ? "Up" : "Truncate");
 
@@ -201,7 +199,6 @@ static void normal_and_subnormal(FP16Unpacked u1, FP16Unpacked u2){
         }
     }
 
-    // Overflow check
     if (exp > 15) {
         if (sign == 0) {
             printf("Result: 7c00\n");
@@ -213,7 +210,7 @@ static void normal_and_subnormal(FP16Unpacked u1, FP16Unpacked u2){
 
     uint16_t Result = ((exp + 15) << 10) + (sign << 15) + pre_fraction;
 
-    // Final overflow guard
+
     if (sign == 0 && Result >= 0x7c00) {
         printf("Result: 7c00\n");
         return;
