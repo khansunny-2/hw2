@@ -161,6 +161,7 @@ static void normal_and_subnormal(FP16Unpacked u1, FP16Unpacked u2){
             uint16_t popped = (Raw>>i)&1 ;
             a = a*2 + popped;
             acount++;
+            printf("%d %d\n",acount,a);
         }
         if (a){
             S = 1;

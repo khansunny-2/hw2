@@ -1,0 +1,30 @@
+Op1: S=0 E=-14 M=0.400 subnormal
+Op2: S=0 E=-14 M=0.400 subnormal
+Raw: 0000010000000000000000 E_raw=-28
+Norm: E_norm=-14 Fraction=0000000001 G=0 R=1 S=0 Action=Up
+Result: 0001
+Op1: S=0 E=-14 M=0.600 subnormal
+Op2: S=0 E=-14 M=0.400 subnormal
+Raw: 0000011000000000000000 E_raw=-28
+Norm: E_norm=-14 Fraction=0000000001 G=0 R=1 S=1 Action=Up
+Result: 0001
+Op1: S=0 E=-14 M=0.004 subnormal
+Op2: S=0 E=0 M=1.000 normal
+Raw: 0000000000010000000000 E_raw=-14
+Norm: E_norm=-14 Fraction=0000000001 G=0 R=0 S=0 Action=Truncate
+Result: 0001
+Op1: S=0 E=-14 M=0.040 subnormal
+Op2: S=0 E=-14 M=0.080 subnormal
+Raw: 0000000000001000000000 E_raw=-28
+Norm: E_norm=-14 Fraction=0000000001 G=0 R=0 S=1 Action=Up
+Result: 0001
+Op1: S=1 E=-14 M=0.004 subnormal
+Op2: S=0 E=0 M=1.000 normal
+Raw: 0000000000010000000000 E_raw=-14
+Norm: E_norm=-14 Fraction=0000000001 G=0 R=0 S=0 Action=Truncate
+Result: 8001
+Op1: S=0 E=-14 M=0.5fc subnormal
+Op2: S=0 E=-14 M=0.400 subnormal
+Raw: 0000010111111100000000 E_raw=-28
+Norm: E_norm=-14 Fraction=0000000001 G=0 R=1 S=1 Action=Up
+Result: 0001
